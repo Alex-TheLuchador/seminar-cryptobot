@@ -6,7 +6,7 @@ A BTC perpetual futures trading bot that talks to the Anthropic API and the Hype
 
 ## What is this?
 
-**The sole purpose** of this is to demonstrate safe agentic development principles. It was not made with the intent to actually place trades, and the 
+**The sole purpose** of this is to demonstrate safe agentic development principles. It was not made with the intent to actually place trades.
 
 As it exists now, this bot is **not** safe for use in an actual trading system.
 
