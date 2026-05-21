@@ -2,3 +2,4 @@ hyperliquid-python-sdk>=0.23.0
 anthropic>=0.103.0
 python-dotenv>=1.0.0
 eth-account>=0.13.0
+pytest>=9.0.0
