@@ -4,6 +4,24 @@ This was developed with the intent to show at a Codesmith seminar focused on bes
 
 A BTC perpetual futures trading bot that talks to the Anthropic API and the Hyperliquid exchange. It was built twice on purpose: once carelessly, once carefully. The two versions sit side by side to illustrate exactly what "being careful" buys you and what it costs you.
 
+## What is this?
+
+**The sole purpose** of this is to demonstrate safe agentic development principles. It was not made with the intent to actually place trades, and the 
+
+As it exists now, this bot is **not** safe for use in an actual trading system.
+
+The idea is to simulate a common trading bot paradigm: 
+
+1. News or social media headlines are ingested to determine market sentiment.
+    - This project does not include any system for actually collecting headlines.
+    - This project shows what happens when safe/normal headlines are ingested (after being scraped), as well as malicious headlines (i.e., prompt injection).
+2. The headlines (sentiment) are determined to be either bullish or bearish.
+3. Crypto trading market data is gathered to determine the funding rates and asset momentum.
+    - These metrics are ultimately going to return either bullish or bearish for funding rates and momentum.
+4. If all signals (sentiment, funding, momentum) are in alignment, a trade is placed.
+    - All signals must match for a trade to be placed.
+    - They can be all bullish or all bearish.
+
 ---
 
 ## The two bots
