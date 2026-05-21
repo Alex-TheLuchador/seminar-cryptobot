@@ -38,7 +38,7 @@ _EXECUTE_ORDER_TOOL = {
             },
             "size_pct": {
                 "type": "number",
-                "description": "Fraction of portfolio equity to size the order (0.0–1.0).",
+                "description": "Fraction of portfolio equity to size the order (0.01–0.05).",
             },
             "signal_id": {
                 "type": "string",
