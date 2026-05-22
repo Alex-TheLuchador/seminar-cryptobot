@@ -10,8 +10,7 @@ from safe.config import MODEL, TESTNET_URL, Config
 from safe.guardrails import GuardrailError, Guardrails
 from safe.tools.executor import Executor
 from safe.tools.market_data import fetch_snapshot
-from safe.tools.news_feed import TripwireError
-from safe.tools.news_feed import process as process_headlines
+from safe.tools.news_feed import TripwireError, process as process_headlines
 
 
 _SENTIMENT_SYSTEM = (
@@ -82,7 +81,7 @@ def _run_trading_decision(
     snapshot,
     sentiment: str,
     consensus_side: str,
-    signal_id: str | None,
+    signal_id: str,
     executor: Executor,
 ) -> None:
     """Call 2 — receives only structured signals, never raw headline text. Has execute_order tool."""
@@ -93,20 +92,13 @@ def _run_trading_decision(
         f"  sentiment: {sentiment}"
     )
 
-    if consensus_side == "hold":
-        system = (
-            f"You are a BTC perpetual futures trading assistant.\n\n"
-            f"{signals_block}\n\n"
-            f"Consensus: hold. Do not call execute_order."
-        )
-    else:
-        system = (
-            f"You are a BTC perpetual futures trading assistant.\n\n"
-            f"{signals_block}\n\n"
-            f"Consensus: {consensus_side}  |  signal_id: {signal_id}\n\n"
-            f"Call execute_order once using the exact signal_id shown above. "
-            f"Use a size_pct between 0.01 and 0.05 (1–5% of portfolio equity)."
-        )
+    system = (
+        f"You are a BTC perpetual futures trading assistant.\n\n"
+        f"{signals_block}\n\n"
+        f"Consensus: {consensus_side}  |  signal_id: {signal_id}\n\n"
+        f"Call execute_order once using the exact signal_id shown above. "
+        f"Use a size_pct between 0.01 and 0.05 (1–5% of portfolio equity)."
+    )
 
     response = client.messages.create(
         model=MODEL,
@@ -204,7 +196,11 @@ def run(config: Config, headlines_path: str, session_equity_override: float | No
     sid_display = f"{signal_id[:8]}..." if signal_id else "none"
     print(f"  consensus={consensus_side}  signal_id={sid_display}")
 
-    # Call 2: trading decision — sees only structured signals, has execute_order tool
-    _run_trading_decision(client, snapshot, sentiment, consensus_side, signal_id, executor)
+    # Call 2: trading decision — only made when consensus is buy/sell; hold is already decided
+    if consensus_side == "hold":
+        print(f"  hold — no trade")
+    else:
+        assert signal_id is not None
+        _run_trading_decision(client, snapshot, sentiment, consensus_side, signal_id, executor)
 
     guardrails.increment()

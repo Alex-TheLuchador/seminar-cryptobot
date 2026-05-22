@@ -78,5 +78,4 @@ class Executor:
         except Exception as exc:
             detail = str(exc)
             self.auditor.log_result(signal_id, "error", detail)
-            self.auditor.log_error(detail)
             return f"exchange error: {detail}"
