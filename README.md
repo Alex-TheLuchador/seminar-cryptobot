@@ -2,25 +2,32 @@
 
 This was developed with the intent to show at a Codesmith seminar focused on best practices in agentic development and vibe coding.
 
-A BTC perpetual futures trading bot that talks to the Anthropic API and the Hyperliquid exchange. It was built twice on purpose: once carelessly, once carefully. The two versions sit side by side to illustrate exactly what "being careful" buys you and what it costs you.
+It's a BTC perpetual futures trading bot that talks to the Anthropic API and the Hyperliquid exchange. It was built twice on purpose: once carelessly, once carefully. The two versions sit side by side to illustrate exactly what "being careful" buys you and what it costs you.
 
 ## What is this?
 
-**The sole purpose** of this is to demonstrate safe agentic development principles. It was not made with the intent to actually place trades.
+**The sole purpose** of this is to demonstrate secure versus insecure agentic development principles. It was not made with the intent to actually place trades.
 
 As it exists now, this bot is **not** safe for use in an actual trading system.
 
-The idea is to simulate a common trading bot paradigm: 
+---
 
-1. News or social media headlines are ingested to determine market sentiment.
-    - This project does not include any system for actually collecting headlines.
-    - This project shows what happens when safe/normal headlines are ingested (after being scraped), as well as malicious headlines (i.e., prompt injection).
-2. The headlines (sentiment) are determined to be either bullish or bearish.
-3. Crypto trading market data is gathered to determine the funding rates and asset momentum.
-    - These metrics are ultimately going to return either bullish or bearish for funding rates and momentum.
-4. If all signals (sentiment, funding, momentum) are in alignment, a trade is placed.
-    - All signals must match for a trade to be placed.
-    - They can be all bullish or all bearish.
+## System overview
+
+The trading strategy in both bots is identical: collect three signals (BTC momentum, funding rate, news sentiment), take a majority vote, and place a market order if at least two agree. What differs is the architecture — specifically, how each bot handles the boundary between reading the world and acting on it.
+
+The unsafe bot collapses that boundary. External data flows directly into Claude's instructions, and Claude's output flows directly to the exchange. The model is trusted to behave correctly. That trust is the vulnerability: anyone who can influence what the bot reads can make it do anything.
+
+The safe bot enforces separation at every layer. The core principle is that **the model proposes, the executor decides.** Claude is used for what it's good at — classifying text — and is structurally prevented from doing what it isn't trusted to do — authorizing trades, setting position sizes, or overriding loss limits.
+
+This produces four properties the unsafe bot doesn't have:
+
+- **Untrusted data never reaches a model that can act.** Headlines are sanitized and passed only to a classifier with no tools. The model that can place orders never sees the raw input.
+- **Constraints are enforced in code, not in prompts.** Position cap, daily loss limit, and kill switch are checked by the executor — Python logic that the model cannot reason around.
+- **Every action is pre-authorized.** Before calling Claude, the agent independently computes the consensus and mints a one-time token. The executor rejects any order that doesn't carry that exact token. Claude can propose a trade; it cannot authorize one.
+- **Every action is audited.** Intent is logged before the exchange call and result after. If the process crashes mid-order, the log surfaces the orphaned trade on next startup.
+
+The details of each component are in the sections below. The architecture section explains why the two-Claude-call design is the actual defense.
 
 ---
 
@@ -28,7 +35,7 @@ The idea is to simulate a common trading bot paradigm:
 
 **Unsafe bot** (`unsafe/bot.py`, ~90 lines):
 
-This is the vibe-coded version, written the way a first-time engineer typically writes it — fast, working, and quietly full of problems. Every bad practice is visible in the file:
+This is the vibe-coded version, written the way a brand new engineer may write it. Every bad practice is visible in the file:
 
 - Private key and API key written directly in source at the top
 - 100% of the wallet balance used as order size on every trade
