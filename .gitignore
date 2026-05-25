@@ -30,3 +30,6 @@ audit.log
 
 notes.md
 PROJECT_TRACKER.md
+
+*.pdf
+*.mov
